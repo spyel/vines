@@ -41,7 +41,7 @@ class Route(BaseRoute):
             return False, {}
 
         if method not in self.methods:
-            return False, {'allowed_methods': self.methods}
+            return False, {'methods': self.methods}
 
         params = match.groupdict()
         for key, value in params.items():
@@ -124,7 +124,7 @@ class Router(BaseRoute):
             return False, {}
 
         if method not in self.methods:
-            return False, {'allowed_methods': self.methods}
+            return False, {'methods': self.methods}
 
         params = match.groupdict()
         for key, value in params.items():
@@ -134,20 +134,17 @@ class Router(BaseRoute):
 
     async def handle(self, request: HttpRequest) -> HttpResponse:
         path: str = request.scope.get('sub_path') or request.path
-
         allowed_methods: list[str] = []
+
         for route in self.routes:
             is_match, child_scope = route.matches(path, request.method)
-            if not is_match:
-                allowed_methods.extend(child_scope.get('allowed_methods', []))
-                continue
+            if is_match:
+                request.scope.update(child_scope)
+                return await route(request)
+            allowed_methods.extend(child_scope.get('methods', []))
 
-            request.scope['params'] = child_scope['params']
-            request.scope['sub_path'] = child_scope['sub_path']
-            return await route(request)
-
-        if len(allowed_methods) > 0:
-            raise MethodNotAllowedException(request.method, allowed_methods=allowed_methods)
+        if allowed_methods:
+            raise MethodNotAllowedException(request.method, allowed_methods)
 
         raise NotFoundException(request.path)
 
