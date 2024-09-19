@@ -28,7 +28,7 @@ pip install git+https://github.com/spyel/vines.git
 Alternatively, clone the repository and install it locally:
 
 ```bash
-git clone https://github.com/yourusername/vines.git
+git clone https://github.com/spyel/vines.git
 cd vines
 pip install .
 ```
