@@ -96,6 +96,21 @@ class Router(BaseRoute):
             return func
         return decorator
 
+    def get(self, path: str) -> Callable:
+        return self.route(path, methods=['GET'])
+
+    def post(self, path: str) -> Callable:
+        return self.route(path, methods=['POST'])
+
+    def put(self, path: str) -> Callable:
+        return self.route(path, methods=['PUT'])
+
+    def patch(self, path: str) -> Callable:
+        return self.route(path, methods=['PATCH'])
+
+    def delete(self, path: str) -> Callable:
+        return self.route(path, methods=['DELETE'])
+
     def build_middleware_chain(self) -> Callable[[HttpRequest], Awaitable[HttpResponse]]:
         chain = self.handle
         for mw in reversed(self.middleware):
