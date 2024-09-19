@@ -1,0 +1,20 @@
+[build-system]
+requires = ['hatchling>=1.25.0']
+build-backend = 'hatchling.build'
+
+[project]
+name = 'vines'
+dynamic = ["version"]
+description = 'A lightweight, high-performance Python Web Framework built on the ASGI standard.'
+readme = 'README.md'
+license = {file = 'LICENSE'}
+authors = [{ name = 'sypel' }]
+requires-python = '>=3.10'
+dependencies = []
+
+[project.urls]
+Homepage = 'https://github.com/spyel/vines'
+Issues = 'https://github.com/spyel/vines/issues'
+
+[tool.hatch.version]
+path = 'vines/__init__.py'
