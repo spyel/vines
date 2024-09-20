@@ -62,12 +62,10 @@ class Router(BaseRoute):
         self,
         path: str,
         routes: Sequence[BaseRoute] | None = None,
-        methods: list[str] | None = None,
         middleware: Sequence[Middleware] | None = None
     ) -> None:
         self.path: str = path
         self.routes: list[BaseRoute] = list(routes or [])
-        self.methods: list[str] = list(methods or HTTP_METHODS)
         self.middleware: list[Middleware] = list(middleware or [])
 
         self._middleware_chain = None
@@ -85,10 +83,9 @@ class Router(BaseRoute):
         self,
         path: str,
         routes: Sequence[BaseRoute] | None = None,
-        methods: list[str] | None = None,
         middleware: Sequence[Middleware] | None = None,
     ) -> None:
-        self.routes.append(Router(path, routes=routes, methods=methods, middleware=middleware))
+        self.routes.append(Router(path, routes=routes, middleware=middleware))
 
     def route(self, path: str, methods: list[str] | None = None) -> Callable:
         def decorator(func: Callable[[HttpRequest], Awaitable[HttpResponse] | HttpResponse]) -> Callable:
@@ -122,9 +119,6 @@ class Router(BaseRoute):
         match: re.Match[str] = self._regex.match(path)
         if match is None:
             return False, {}
-
-        if method not in self.methods:
-            return False, {'methods': self.methods}
 
         params = match.groupdict()
         for key, value in params.items():
