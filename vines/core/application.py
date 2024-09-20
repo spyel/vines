@@ -37,23 +37,13 @@ class Vines:
             ] + list(middleware or [])
         )
 
-    def route(self, path: str, methods: list[str] | None = None) -> Callable:
-        return self.router.route(path, methods=methods)
+    async def __call__(self, scope, receive, send) -> None:
+        """Entrypoint for the ASGI application."""
+        if not scope['type'] == 'http':
+            raise ValueError(f'Vines can only handle ASGI/HTTP connections, not {scope['type']}.')
 
-    def get(self, path: str) -> Callable:
-        return self.router.get(path)
-
-    def post(self, path: str) -> Callable:
-        return self.router.post(path)
-
-    def put(self, path: str) -> Callable:
-        return self.router.put(path)
-
-    def patch(self, path: str) -> Callable:
-        return self.router.patch(path)
-
-    def delete(self, path: str) -> Callable:
-        return self.router.delete(path)
+        scope['app'] = self
+        await self.handle(scope, receive, send)
 
     async def handle(self, scope, receive, send) -> None:
         """Handles the ASGI request. Called via the __call__ method."""
@@ -88,10 +78,20 @@ class Vines:
         body_file.seek(0)
         return body_file
 
-    async def __call__(self, scope, receive, send) -> None:
-        """Entrypoint for the ASGI application."""
-        if not scope['type'] == 'http':
-            raise ValueError(f'Vines can only handle ASGI/HTTP connections, not {scope['type']}.')
+    def route(self, path: str, methods: list[str] | None = None) -> Callable:
+        return self.router.route(path, methods=methods)
 
-        scope['app'] = self
-        await self.handle(scope, receive, send)
+    def get(self, path: str) -> Callable:
+        return self.router.get(path)
+
+    def post(self, path: str) -> Callable:
+        return self.router.post(path)
+
+    def put(self, path: str) -> Callable:
+        return self.router.put(path)
+
+    def patch(self, path: str) -> Callable:
+        return self.router.patch(path)
+
+    def delete(self, path: str) -> Callable:
+        return self.router.delete(path)
