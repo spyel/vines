@@ -38,10 +38,22 @@ class Vines:
         )
 
     def route(self, path: str, methods: list[str] | None = None) -> Callable:
-        def decorator(func: Callable[[HttpRequest], Awaitable[HttpResponse] | HttpResponse]) -> Callable:
-            self.router.add_route(path, func, methods=methods)
-            return func
-        return decorator
+        return self.router.route(path, methods=methods)
+
+    def get(self, path: str) -> Callable:
+        return self.router.get(path)
+
+    def post(self, path: str) -> Callable:
+        return self.router.post(path)
+
+    def put(self, path: str) -> Callable:
+        return self.router.put(path)
+
+    def patch(self, path: str) -> Callable:
+        return self.router.patch(path)
+
+    def delete(self, path: str) -> Callable:
+        return self.router.delete(path)
 
     async def handle(self, scope, receive, send) -> None:
         """Handles the ASGI request. Called via the __call__ method."""
