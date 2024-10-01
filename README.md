@@ -19,18 +19,14 @@ Your contributions and suggestions are highly welcome!
 
 ### 🔧 Installation
 
-Since Vines is in development, install it directly from the repository using pip:
+```bash
+pip install vines
+```
+
+Alternatively, install the newest development version directly from the repository:
 
 ```bash
 pip install git+https://github.com/spyel/vines.git
-```
-
-Alternatively, clone the repository and install it locally:
-
-```bash
-git clone https://github.com/spyel/vines.git
-cd vines
-pip install .
 ```
 
 Additionally, you'll need an ASGI server like ``uvicorn``, ``daphne``, or ``hypercorn``:
