@@ -15,7 +15,7 @@ Core features are being built and refined, and the API is subject to change.
 Your contributions and suggestions are highly welcome!
 
 
-## 🏁 Getting Started
+## 🌱 Getting Started
 
 ### 🔧 Installation
 
