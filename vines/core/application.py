@@ -1,11 +1,10 @@
-import io
-from typing import Any, Sequence, Callable, Awaitable, IO
+from typing import Any, Sequence, Callable
 
 from vines.routing import Router, Route
 from vines.middleware import Middleware
 from vines.middleware.error import ServerErrorMiddleware, ExceptionMiddleware
 from vines.http import HttpRequest, HttpResponse
-from vines.core.exceptions import RequestAborted
+from vines.core.types import Scope, Receive, Send
 
 
 class Vines:
@@ -37,46 +36,16 @@ class Vines:
             ] + list(middleware or [])
         )
 
-    async def __call__(self, scope, receive, send) -> None:
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
         """Entrypoint for the ASGI application."""
         if not scope['type'] == 'http':
             raise ValueError(f'Vines can only handle ASGI/HTTP connections, not {scope['type']}.')
 
         scope['app'] = self
-        await self.handle(scope, receive, send)
 
-    async def handle(self, scope, receive, send) -> None:
-        """Handles the ASGI request. Called via the __call__ method."""
-        body_file = await self.read_body(receive)
-
-        request: HttpRequest = HttpRequest(scope, body_file)
+        request: HttpRequest = HttpRequest(scope, receive)
         response: HttpResponse = await self.router(request)
-
-        await send({
-            'type': 'http.response.start',
-            'status': response.status_code,
-            'headers': response.headers.encode()}
-        )
-        await send({'type': 'http.response.body', 'body': response.body})
-
-    async def read_body(self, receive):
-        """Reads an HTTP body from an ASGI connection."""
-        is_streaming: bool = True
-        body_file: IO = io.BytesIO()
-        while is_streaming:
-            message = await receive()
-
-            if message['type'] == 'http.disconnect':
-                body_file.close()
-                raise RequestAborted()
-
-            body_file.write(message.get('body', b''))
-
-            if not message.get('more_body', False):
-                is_streaming = False
-
-        body_file.seek(0)
-        return body_file
+        await response(scope, receive, send)
 
     def route(self, path: str, methods: list[str] | None = None) -> Callable:
         return self.router.route(path, methods=methods)

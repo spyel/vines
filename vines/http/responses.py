@@ -4,6 +4,7 @@ from typing import Any, Type, Literal, MutableMapping
 
 from vines.http import status as http_status
 from vines.http.utils import DateTimeEncoder
+from vines.core.types import Scope, Receive, Send
 
 
 class HttpResponseHeaders(MutableMapping[str, str]):
@@ -88,6 +89,7 @@ class HttpResponseHeaders(MutableMapping[str, str]):
 
 
 class HttpResponse:
+    chunk_size: int = 1024
 
     def __init__(
         self,
@@ -136,6 +138,25 @@ class HttpResponse:
         if isinstance(self._content, str):
             return self._content.encode(self.charset)
         return str(self._content).encode(self.charset)
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        await send({
+            'type': 'http.response.start',
+            'status': self.status_code,
+            'headers': self.headers.encode()}
+        )
+
+        total_sent: int = 0
+        while total_sent < len(self.body):
+            chunk: bytes = self.body[total_sent:total_sent + self.chunk_size]
+            total_sent += len(chunk)
+
+            more_body: bool = total_sent < len(self.body)
+            await send({
+                'type': 'http.response.body',
+                'body': chunk,
+                'more_body': more_body
+            })
 
 
 class JSONResponse(HttpResponse):

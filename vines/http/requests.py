@@ -1,8 +1,10 @@
 import json
-from typing import Any, Mapping, IO
+from typing import Any, Mapping
 from urllib.parse import parse_qsl
 
 from vines.http.utils import parse_cookie
+from vines.core.types import Scope, Receive, Message
+from vines.core.exceptions import RequestAborted
 
 
 class HttpHeaders(Mapping[str, str]):
@@ -33,14 +35,14 @@ class HttpHeaders(Mapping[str, str]):
 class HttpRequest:
     """Represents an HTTP request, parsing and providing access to its components."""
 
-    def __init__(self, scope, body_file: IO) -> None:
-        self.scope = scope
+    def __init__(self, scope: Scope, receive: Receive) -> None:
+        self.scope: Scope = scope
+        self.receive: Receive = receive
         self._query_params: dict[str, str] | None = None
         self._headers: HttpHeaders | None = None
         self._cookies: dict[str, str] | None = None
         self._body: bytes | None = None
         self._json: dict | None = None
-        self._stream: IO = body_file
 
     @property
     def app(self):
@@ -88,13 +90,28 @@ class HttpRequest:
             self._headers = HttpHeaders(self.scope['headers'])
         return self._headers
 
-    @property
-    def body(self):
-        if self._body is None:
-            self._body = self._stream.read()
+    async def body(self):
+        if self._body is not None:
+            return self._body
+
+        chunks: list[bytes] = []
+        while True:
+            message: Message = await self.receive()
+
+            if message['type'] == 'http.disconnect':
+                raise RequestAborted()
+
+            if message['type'] == 'http.request':
+                chunk: bytes = message.get('body', b'')
+                chunks.append(chunk)
+
+                if not message.get('more_body', False):
+                    break
+
+        self._body = b''.join(chunks)
         return self._body
 
-    def json(self) -> dict:
+    async def json(self) -> dict:
         if self._json is None:
-            self._json = json.loads(self.body)
+            self._json = json.loads(await self.body())
         return self._json
