@@ -62,7 +62,7 @@ Once the server is running, visit ```http://127.0.0.1:8000``` to see your basic 
 Vines is licensed under the [MIT License](LICENSE).
 
 
-## 👥 Community and Support
+## 🤝 Community and Support
 
 If you have any questions or need support, feel free to:
 
