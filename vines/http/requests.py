@@ -90,7 +90,7 @@ class HttpRequest:
             self._headers = HttpHeaders(self.scope['headers'])
         return self._headers
 
-    async def body(self):
+    async def body(self) -> bytes:
         if self._body is not None:
             return self._body
 
