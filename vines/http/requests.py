@@ -1,5 +1,5 @@
 import json
-from typing import Any, Mapping
+from typing import Any, Mapping, AsyncGenerator
 from urllib.parse import parse_qsl
 
 from vines.http.utils import parse_cookie
@@ -90,25 +90,29 @@ class HttpRequest:
             self._headers = HttpHeaders(self.scope['headers'])
         return self._headers
 
-    async def body(self) -> bytes:
+    async def stream(self) -> AsyncGenerator[bytes]:
         if self._body is not None:
-            return self._body
-
-        chunks: list[bytes] = []
-        while True:
+            yield self._body
+            yield b''
+            return
+        is_streaming: bool = True
+        while is_streaming:
             message: Message = await self.receive()
-
             if message['type'] == 'http.disconnect':
                 raise RequestAborted()
-
             if message['type'] == 'http.request':
                 chunk: bytes = message.get('body', b'')
-                chunks.append(chunk)
-
                 if not message.get('more_body', False):
-                    break
+                    is_streaming = False
+                yield chunk
+        yield b''
 
-        self._body = b''.join(chunks)
+    async def body(self) -> bytes:
+        if self._body is None:
+            chunks: bytearray = bytearray()
+            async for chunk in self.stream():
+                chunks.extend(chunk)
+            self._body = bytes(chunks)
         return self._body
 
     async def json(self) -> dict:
