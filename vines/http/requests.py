@@ -108,6 +108,12 @@ class HttpRequest:
         yield b''
 
     async def body(self) -> bytes:
+        """
+        Retrieves the entire request body as a single bytes object.
+
+        Warning: This method des not enforce any size limit on the request body,
+        so processing large or untrusted requests could exhaust memory. Use with caution.
+        """
         if self._body is None:
             chunks: bytearray = bytearray()
             async for chunk in self.stream():
